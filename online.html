@@ -12,14 +12,20 @@ button:hover{background:#fff;color:#000}
 .board{display:grid;grid-template-columns:repeat(3,100px);gap:2px;background:#808080;border:2px solid #808080}
 .cell{width:100px;height:100px;background:#000;display:flex;justify-content:center;align-items:center;font-size:40px;cursor:pointer}
 .cell:hover{background:#808080}
-#os,#gidD{font-size:24px}
+#os,#gidD,#timer{font-size:24px}
+#botOffer{display:none;flex-direction:column;gap:10px;align-items:center}
 </style>
 </head>
 <body>
 <div id="om">
-<button onclick="createGame()">СОЗДАТЬ</button>
-<input id="gid" placeholder="АЙДИ ИГРЫ" maxlength="8">
-<button onclick="joinGame()">ВОЙТИ</button>
+<button onclick="findGame()">НАЙТИ ИГРУ</button>
+</div>
+<div id="waiting" style="display:none">
+<div id="timer"></div>
+<div id="botOffer">
+<button onclick="playBot()">ИГРАТЬ С БОТОМ</button>
+<button onclick="continueWait()">ЖДАТЬ ДАЛЬШЕ</button>
+</div>
 </div>
 <div id="og" style="display:none">
 <div id="gidD"></div>
@@ -30,13 +36,13 @@ button:hover{background:#fff;color:#000}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
 const fc={apiKey:"AIzaSyCkb5_RLx2ZKfsfx8Y4eJARNsTxyCgGSmg",authDomain:"crosses-circles.firebaseapp.com",databaseURL:"https://crosses-circles-default-rtdb.firebaseio.com",projectId:"crosses-circles",storageBucket:"crosses-circles.firebasestorage.app",messagingSenderId:"772946982730",appId:"1:772946982730:web:33720a21f3bbbd24c4b3b3"};
 const app=initializeApp(fc);
 const auth=getAuth(app);
 const db=getDatabase(app);
-let ob=['','','','','','','','',''],oc='X',ogid='',op='',uid='';
+let ob=['','','','','','','','',''],oc='X',ogid='',op='',uid='',botMode=false,timerInterval=null,timeLeft=20;
 const W=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
 onAuthStateChanged(auth,u=>{if(!u){location.href='index.html'}else{uid=u.uid}});
@@ -44,31 +50,95 @@ onAuthStateChanged(auth,u=>{if(!u){location.href='index.html'}else{uid=u.uid}});
 function render(){const b=document.getElementById('ob');b.innerHTML='';ob.forEach((c,i)=>{const d=document.createElement('div');d.className='cell';d.textContent=c;d.onclick=()=>omove(i);b.appendChild(d)});document.getElementById('os').textContent=oc+' ХОДИТ'}
 function checkW(){return W.some(w=>ob[w[0]]&&ob[w[0]]===ob[w[1]]&&ob[w[0]]===ob[w[2]])}
 
+window.findGame=function(){
+document.getElementById('om').style.display='none';
+document.getElementById('waiting').style.display='flex';
+timeLeft=20;
+document.getElementById('timer').textContent='ПОИСК: '+timeLeft+' СЕК';
+timerInterval=setInterval(()=>{
+timeLeft--;
+document.getElementById('timer').textContent='ПОИСК: '+timeLeft+' СЕК';
+if(timeLeft<=0){
+clearInterval(timerInterval);
+document.getElementById('botOffer').style.display='flex';
+}
+},1000);
+checkFreeGame();
+};
+
+function checkFreeGame(){
+get(ref(db,'games')).then(s=>{
+const games=s.val();
+if(games){
+for(const id in games){
+if(games[id].players===1&&!games[id].playerO){
+joinGame(id);
+return;
+}
+}
+}
+});
+}
+
+function joinGame(id){
+ogid=id;
+op='O';
+update(ref(db,'games/'+ogid),{playerO:uid,players:2});
+clearInterval(timerInterval);
+document.getElementById('waiting').style.display='none';
+document.getElementById('og').style.display='block';
+document.getElementById('gidD').textContent='АЙДИ: '+ogid;
+startL();
+}
+
+window.playBot=function(){
+clearInterval(timerInterval);
+botMode=true;
+ogid=Math.random().toString(36).substr(2,8).toUpperCase();
+op='X';
+ob=['','','','','','','','',''];
+document.getElementById('waiting').style.display='none';
+document.getElementById('og').style.display='block';
+document.getElementById('gidD').textContent='БОТ';
+render();
+};
+
+window.continueWait=function(){
+document.getElementById('botOffer').style.display='none';
+timeLeft=20;
+document.getElementById('timer').textContent='ПОИСК: '+timeLeft+' СЕК';
+timerInterval=setInterval(()=>{
+timeLeft--;
+document.getElementById('timer').textContent='ПОИСК: '+timeLeft+' СЕК';
+if(timeLeft<=0){
+clearInterval(timerInterval);
+document.getElementById('botOffer').style.display='flex';
+}
+},1000);
+checkFreeGame();
+};
+
 window.createGame=function(){
 ogid=Math.random().toString(36).substr(2,8).toUpperCase();
 op='X';
 ob=['','','','','','','','',''];
 set(ref(db,'games/'+ogid),{board:ob,current:'X',players:1,playerX:uid});
-onValue(ref(db,'games/'+ogid+'/players'),s=>{
-if(s.val()===2){
 document.getElementById('om').style.display='none';
-document.getElementById('og').style.display='block';
-document.getElementById('gidD').textContent='АЙДИ: '+ogid;
-startL();
+document.getElementById('waiting').style.display='flex';
+timeLeft=20;
+document.getElementById('timer').textContent='ПОИСК: '+timeLeft+' СЕК';
+timerInterval=setInterval(()=>{
+timeLeft--;
+document.getElementById('timer').textContent='ПОИСК: '+timeLeft+' СЕК';
+if(timeLeft<=0){
+clearInterval(timerInterval);
+document.getElementById('botOffer').style.display='flex';
 }
-});
-document.getElementById('om').style.display='none';
-document.getElementById('og').style.display='block';
-document.getElementById('gidD').textContent='АЙДИ: '+ogid;
-};
-
-window.joinGame=function(){
-ogid=document.getElementById('gid').value.toUpperCase();
-op='O';
-update(ref(db,'games/'+ogid),{playerO:uid});
+},1000);
 onValue(ref(db,'games/'+ogid+'/players'),s=>{
 if(s.val()===2){
-document.getElementById('om').style.display='none';
+clearInterval(timerInterval);
+document.getElementById('waiting').style.display='none';
 document.getElementById('og').style.display='block';
 document.getElementById('gidD').textContent='АЙДИ: '+ogid;
 startL();
@@ -84,11 +154,32 @@ onValue(ref(db,'games/'+ogid+'/current'),s=>{if(s.val()){oc=s.val();render()}});
 window.omove=function(i){
 if(ob[i]||oc!==op)return;
 ob[i]=op;
+if(botMode){
+if(checkW()){alert(op+' ПОБЕДИЛ');resetO();return}
+if(ob.every(c=>c)){alert('НИЧЬЯ');resetO();return}
+oc='O';
+render();
+setTimeout(()=>{
+if(botMode&&oc==='O'){
+const empty=[];
+ob.forEach((c,idx)=>{if(!c)empty.push(idx)});
+if(empty.length>0){
+const r=empty[Math.floor(Math.random()*empty.length)];
+ob[r]='O';
+if(checkW()){alert('БОТ ПОБЕДИЛ');resetO();return}
+if(ob.every(c=>c)){alert('НИЧЬЯ');resetO();return}
+oc='X';
+render();
+}
+}
+},500);
+}else{
 set(ref(db,'games/'+ogid+'/board'),ob);
 if(checkW()){alert(op+' ПОБЕДИЛ');set(ref(db,'games/'+ogid),null);resetO()}
 else if(ob.every(c=>c)){alert('НИЧЬЯ');set(ref(db,'games/'+ogid),null);resetO()}
 else{set(ref(db,'games/'+ogid+'/current'),op==='X'?'O':'X')}
 render();
+}
 };
 
 function resetO(){
@@ -96,9 +187,12 @@ ob=['','','','','','','','',''];
 oc='X';
 ogid='';
 op='';
+botMode=false;
+clearInterval(timerInterval);
 document.getElementById('om').style.display='block';
+document.getElementById('waiting').style.display='none';
 document.getElementById('og').style.display='none';
-document.getElementById('gid').value='';
+document.getElementById('botOffer').style.display='none';
 location.href='index.html';
 }
 </script>
