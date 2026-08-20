@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>C-C</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;font-family:monospace}
+body{background:#000;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;flex-direction:column;gap:20px}
+input{background:#000;border:2px solid #808080;color:#fff;padding:10px;width:200px;font-size:16px}
+button{background:#000;border:2px solid #fff;color:#fff;padding:10px 20px;cursor:pointer;font-size:16px}
+button:hover{background:#fff;color:#000}
+.page{display:none}
+.page.active{display:flex;flex-direction:column;align-items:center;gap:20px}
+</style>
+</head>
+<body>
+<div id="auth" class="page active">
+<input id="nickname" placeholder="НИКНЕЙМ">
+<input id="password" placeholder="ПАРОЛЬ" type="password">
+<button onclick="signUp()">РЕГИСТРАЦИЯ</button>
+<button onclick="signIn()">ВОЙТИ</button>
+</div>
+<div id="menu" class="page">
+<div id="userInfo"></div>
+<button onclick="location.href='local.html'">2 ИГРОКА</button>
+<button onclick="location.href='online.html'">ОНЛАЙН</button>
+<button onclick="signOut()">ВЫХОД</button>
+</div>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js"></script>
+<script>
+const fc={apiKey:"AIzaSyCkb5_RLx2ZKfsfx8Y4eJARNsTxyCgGSmg",authDomain:"crosses-circles.firebaseapp.com",databaseURL:"https://crosses-circles-default-rtdb.firebaseio.com",projectId:"crosses-circles",storageBucket:"crosses-circles.firebasestorage.app",messagingSenderId:"772946982730",appId:"1:772946982730:web:33720a21f3bbbd24c4b3b3"};
+firebase.initializeApp(fc);
+const db=firebase.database();
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
+firebase.auth().onAuthStateChanged(u=>{
+if(u){
+db.ref('users/'+u.uid).once('value').then(s=>{
+const data=s.val();
+document.getElementById('userInfo').textContent=(data&&data.nickname)?data.nickname:u.uid;
+});
+showPage('menu');
+}else{
+showPage('auth');
+}
+});
+function signUp(){
+const nick=document.getElementById('nickname').value;
+firebase.auth().createUserWithEmailAndPassword(nick+'@c-c.com',password.value).then(cred=>{
+db.ref('users/'+cred.user.uid).set({nickname:nick});
+}).catch(alert);
+}
+function signIn(){
+const nick=document.getElementById('nickname').value;
+firebase.auth().signInWithEmailAndPassword(nick+'@c-c.com',password.value).catch(alert);
+}
+function signOut(){
+firebase.auth().signOut();
+}
+</script>
+</body>
+</html>
