@@ -11,12 +11,19 @@ button{background:#000;border:2px solid #fff;color:#fff;padding:15px 30px;cursor
 button:hover{background:#fff;color:#000}
 .page{display:none}
 .page.active{display:flex;flex-direction:column;align-items:center;gap:20px}
+#passWrap{position:relative;width:280px}
+#passWrap input{width:100%;padding-right:70px}
+#eyeBtn{position:absolute;right:0;top:0;height:100%;width:70px;background:#000;border:2px solid #808080;color:#fff;cursor:pointer;font-size:16px;padding:0}
+#eyeBtn:hover{background:#808080;color:#000}
 </style>
 </head>
 <body>
 <div id="auth" class="page active">
 <input id="nickname" placeholder="НИКНЕЙМ">
+<div id="passWrap">
 <input id="password" placeholder="ПАРОЛЬ" type="password">
+<button id="eyeBtn" onclick="togglePass()">ВИДНО</button>
+</div>
 <button onclick="signUp()">РЕГИСТРАЦИЯ</button>
 <button onclick="signIn()">ВОЙТИ</button>
 </div>
@@ -46,6 +53,12 @@ document.getElementById('userInfo').textContent=u.email.split('@')[0];
 showPage('auth');
 }
 });
+
+window.togglePass=function(){
+const p=document.getElementById('password');
+const b=document.getElementById('eyeBtn');
+if(p.type==='password'){p.type='text';b.textContent='СКРЫТЬ'}else{p.type='password';b.textContent='ВИДНО'}
+};
 
 window.signUp=function(){
 const nick=document.getElementById('nickname').value;
