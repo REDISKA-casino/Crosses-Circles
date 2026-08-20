@@ -2,11 +2,12 @@
 <html>
 <head>
 <title>C-C</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;font-family:monospace}
-body{background:#000;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;flex-direction:column;gap:20px}
-input{background:#000;border:2px solid #808080;color:#fff;padding:10px;width:200px;font-size:16px}
-button{background:#000;border:2px solid #fff;color:#fff;padding:10px 20px;cursor:pointer;font-size:16px}
+body{background:#000;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;flex-direction:column;gap:20px;padding:20px}
+input{background:#000;border:2px solid #808080;color:#fff;padding:15px;width:280px;font-size:20px}
+button{background:#000;border:2px solid #fff;color:#fff;padding:15px 30px;cursor:pointer;font-size:20px;width:280px}
 button:hover{background:#fff;color:#000}
 .page{display:none}
 .page.active{display:flex;flex-direction:column;align-items:center;gap:20px}
@@ -20,7 +21,7 @@ button:hover{background:#fff;color:#000}
 <button onclick="signIn()">ВОЙТИ</button>
 </div>
 <div id="menu" class="page">
-<div id="userInfo"></div>
+<div id="userInfo" style="font-size:24px"></div>
 <button onclick="location.href='local.html'">2 ИГРОКА</button>
 <button onclick="location.href='online.html'">ОНЛАЙН</button>
 <button onclick="signOut()">ВЫХОД</button>
@@ -46,13 +47,17 @@ showPage('auth');
 });
 function signUp(){
 const nick=document.getElementById('nickname').value;
-firebase.auth().createUserWithEmailAndPassword(nick+'@c-c.com',password.value).then(cred=>{
+const pass=document.getElementById('password').value;
+if(!nick||!pass){alert('ЗАПОЛНИ ВСЕ ПОЛЯ');return}
+firebase.auth().createUserWithEmailAndPassword(nick+'@c-c.com',pass).then(cred=>{
 db.ref('users/'+cred.user.uid).set({nickname:nick});
-}).catch(alert);
+}).catch(e=>alert(e.message));
 }
 function signIn(){
 const nick=document.getElementById('nickname').value;
-firebase.auth().signInWithEmailAndPassword(nick+'@c-c.com',password.value).catch(alert);
+const pass=document.getElementById('password').value;
+if(!nick||!pass){alert('ЗАПОЛНИ ВСЕ ПОЛЯ');return}
+firebase.auth().signInWithEmailAndPassword(nick+'@c-c.com',pass).catch(e=>alert(e.message));
 }
 function signOut(){
 firebase.auth().signOut();
