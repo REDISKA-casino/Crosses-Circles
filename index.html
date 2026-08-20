@@ -26,42 +26,46 @@ button:hover{background:#fff;color:#000}
 <button onclick="location.href='online.html'">ОНЛАЙН</button>
 <button onclick="signOut()">ВЫХОД</button>
 </div>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js"></script>
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
 const fc={apiKey:"AIzaSyCkb5_RLx2ZKfsfx8Y4eJARNsTxyCgGSmg",authDomain:"crosses-circles.firebaseapp.com",databaseURL:"https://crosses-circles-default-rtdb.firebaseio.com",projectId:"crosses-circles",storageBucket:"crosses-circles.firebasestorage.app",messagingSenderId:"772946982730",appId:"1:772946982730:web:33720a21f3bbbd24c4b3b3"};
-firebase.initializeApp(fc);
-const db=firebase.database();
+const app=initializeApp(fc);
+const auth=getAuth(app);
+const db=getDatabase(app);
+
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active')}
-firebase.auth().onAuthStateChanged(u=>{
+
+onAuthStateChanged(auth,u=>{
 if(u){
-db.ref('users/'+u.uid).once('value').then(s=>{
-const data=s.val();
-document.getElementById('userInfo').textContent=(data&&data.nickname)?data.nickname:u.uid;
-});
 showPage('menu');
+document.getElementById('userInfo').textContent=u.email.split('@')[0];
 }else{
 showPage('auth');
 }
 });
-function signUp(){
+
+window.signUp=function(){
 const nick=document.getElementById('nickname').value;
 const pass=document.getElementById('password').value;
 if(!nick||!pass){alert('ЗАПОЛНИ ВСЕ ПОЛЯ');return}
-firebase.auth().createUserWithEmailAndPassword(nick+'@c-c.com',pass).then(cred=>{
-db.ref('users/'+cred.user.uid).set({nickname:nick});
+createUserWithEmailAndPassword(auth,nick+'@c-c.com',pass).then(cred=>{
+set(ref(db,'users/'+cred.user.uid),{nickname:nick});
 }).catch(e=>alert(e.message));
-}
-function signIn(){
+};
+
+window.signIn=function(){
 const nick=document.getElementById('nickname').value;
 const pass=document.getElementById('password').value;
 if(!nick||!pass){alert('ЗАПОЛНИ ВСЕ ПОЛЯ');return}
-firebase.auth().signInWithEmailAndPassword(nick+'@c-c.com',pass).catch(e=>alert(e.message));
-}
-function signOut(){
-firebase.auth().signOut();
-}
+signInWithEmailAndPassword(auth,nick+'@c-c.com',pass).catch(e=>alert(e.message));
+};
+
+window.signOut=function(){
+signOut(auth);
+};
 </script>
 </body>
 </html>
