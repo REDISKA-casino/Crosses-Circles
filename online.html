@@ -12,7 +12,9 @@ button:hover{background:#fff;color:#000}
 .board{display:grid;grid-template-columns:repeat(3,100px);gap:2px;background:#808080;border:2px solid #808080}
 .cell{width:100px;height:100px;background:#000;display:flex;justify-content:center;align-items:center;font-size:40px;cursor:pointer}
 .cell:hover{background:#808080}
-#os,#gidD,#timer{font-size:24px}
+#os,#timer{font-size:24px}
+#gidD{font-size:12px;color:#808080}
+#oppName{font-size:24px}
 #botOffer{display:none;flex-direction:column;gap:10px;align-items:center}
 </style>
 </head>
@@ -28,9 +30,10 @@ button:hover{background:#fff;color:#000}
 </div>
 </div>
 <div id="og" style="display:none">
-<div id="gidD"></div>
+<div id="oppName"></div>
 <div class="board" id="ob"></div>
 <div id="os"></div>
+<div id="gidD"></div>
 </div>
 <button onclick="location.href='index.html'">НАЗАД</button>
 <script type="module">
@@ -118,7 +121,16 @@ if(s.val()===2){
 clearInterval(timerInterval);
 document.getElementById('waiting').style.display='none';
 document.getElementById('og').style.display='block';
-document.getElementById('gidD').textContent='АЙДИ: '+ogid;
+document.getElementById('gidD').textContent=ogid.toLowerCase();
+get(ref(db,'games/'+ogid)).then(gs=>{
+const gd=gs.val();
+if(gd&&gd.playerO){
+get(ref(db,'users/'+gd.playerO)).then(us=>{
+const ud=us.val();
+document.getElementById('oppName').textContent='ПРОТИВ: '+(ud&&ud.nickname?ud.nickname:'ИГРОК');
+});
+}
+});
 startL();
 }
 });
@@ -134,6 +146,7 @@ oppUID=data.playerX;
 get(ref(db,'users/'+oppUID)).then(us=>{
 const ud=us.val();
 if(ud&&ud.sp){oppSP=ud.sp}
+document.getElementById('oppName').textContent='ПРОТИВ: '+(ud&&ud.nickname?ud.nickname:'ИГРОК');
 });
 }
 });
@@ -141,7 +154,7 @@ update(ref(db,'games/'+ogid),{playerO:uid,players:2});
 clearInterval(timerInterval);
 document.getElementById('waiting').style.display='none';
 document.getElementById('og').style.display='block';
-document.getElementById('gidD').textContent='АЙДИ: '+ogid;
+document.getElementById('gidD').textContent=ogid.toLowerCase();
 startL();
 }
 
@@ -153,7 +166,8 @@ op='X';
 ob=['','','','','','','','',''];
 document.getElementById('waiting').style.display='none';
 document.getElementById('og').style.display='block';
-document.getElementById('gidD').textContent='БОТ';
+document.getElementById('oppName').textContent='ПРОТИВ: БОТ';
+document.getElementById('gidD').textContent=ogid.toLowerCase();
 render();
 };
 
