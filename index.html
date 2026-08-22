@@ -15,6 +15,8 @@ button:hover{background:#fff;color:#000}
 #passWrap input{width:100%;padding-right:70px}
 #eyeBtn{position:absolute;right:0;top:0;height:100%;width:70px;background:#000;border:2px solid #808080;color:#fff;cursor:pointer;font-size:16px;padding:0}
 #eyeBtn:hover{background:#808080;color:#000}
+#userInfo{font-size:24px}
+#spInfo{font-size:20px;color:#808080}
 </style>
 </head>
 <body>
@@ -28,7 +30,8 @@ button:hover{background:#fff;color:#000}
 <button onclick="signIn()">ВОЙТИ</button>
 </div>
 <div id="menu" class="page">
-<div id="userInfo" style="font-size:24px"></div>
+<div id="userInfo"></div>
+<div id="spInfo"></div>
 <button onclick="location.href='local.html'">2 ИГРОКА</button>
 <button onclick="location.href='online.html'">ОНЛАЙН</button>
 <button onclick="signOut()">ВЫХОД</button>
@@ -36,7 +39,7 @@ button:hover{background:#fff;color:#000}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
 const fc={apiKey:"AIzaSyCkb5_RLx2ZKfsfx8Y4eJARNsTxyCgGSmg",authDomain:"crosses-circles.firebaseapp.com",databaseURL:"https://crosses-circles-default-rtdb.firebaseio.com",projectId:"crosses-circles",storageBucket:"crosses-circles.firebasestorage.app",messagingSenderId:"772946982730",appId:"1:772946982730:web:33720a21f3bbbd24c4b3b3"};
 const app=initializeApp(fc);
@@ -49,6 +52,10 @@ onAuthStateChanged(auth,u=>{
 if(u){
 showPage('menu');
 document.getElementById('userInfo').textContent=u.email.split('@')[0];
+get(ref(db,'users/'+u.uid)).then(s=>{
+const data=s.val();
+document.getElementById('spInfo').textContent='SP: '+(data&&data.sp?data.sp:1000);
+});
 }else{
 showPage('auth');
 }
@@ -65,7 +72,7 @@ const nick=document.getElementById('nickname').value;
 const pass=document.getElementById('password').value;
 if(!nick||!pass){alert('ЗАПОЛНИ ВСЕ ПОЛЯ');return}
 createUserWithEmailAndPassword(auth,nick+'@c-c.com',pass).then(cred=>{
-set(ref(db,'users/'+cred.user.uid),{nickname:nick});
+set(ref(db,'users/'+cred.user.uid),{nickname:nick,sp:1000});
 }).catch(e=>alert(e.message));
 };
 
